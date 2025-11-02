@@ -10,9 +10,11 @@ import {
   TextField,
   InputAdornment,
   Badge,
+  Button,
   useTheme,
   useMediaQuery
 } from '@mui/material'
+import { NavLink } from 'react-router-dom'
 
 const Navbar = ({ onMenuClick }) => {
   const { user } = useUser()
@@ -70,7 +72,36 @@ const Navbar = ({ onMenuClick }) => {
           </Box>
         </Box>
 
-        {/* Center - Search bar */}
+        {/* Center - Navigation (desktop) */}
+        <Box sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', gap: 1, ml: 2 }}>
+          {[
+            { to: '/dashboard', label: 'Dashboard' },
+            { to: '/recipes', label: 'Recipes' },
+            { to: '/chat', label: 'AI Chef' },
+            { to: '/calories', label: 'Calories' },
+            { to: '/profile', label: 'Profile' }
+          ].map((item) => (
+            <Button
+              key={item.to}
+              component={NavLink}
+              to={item.to}
+              color="inherit"
+              sx={{
+                color: 'text.secondary',
+                textTransform: 'none',
+                fontWeight: 'medium',
+                '&.active': {
+                  color: 'text.primary',
+                  bgcolor: 'action.hover'
+                }
+              }}
+            >
+              {item.label}
+            </Button>
+          ))}
+        </Box>
+
+        {/* Search bar */}
         <Box sx={{ flexGrow: 1, maxWidth: 500, mx: 2 }}>
           <Box component="form" onSubmit={handleSearch}>
             <TextField

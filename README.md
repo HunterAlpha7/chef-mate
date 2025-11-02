@@ -1,16 +1,35 @@
-# React + Vite
+# ChefMate
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+ChefMate is a React (Vite) frontend using Material-UI and Clerk for authentication. It integrates with TheMealDB for recipes. This repository currently contains only the frontend app.
 
-Currently, two official plugins are available:
+## Running the app
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Install dependencies: `npm install`
+- Start dev server: `npm run dev`
 
-## React Compiler
+## MongoDB integration
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+This repo does not include a Node.js backend. MongoDB connections cannot be made directly from the browser. To use MongoDB:
 
-## Expanding the ESLint configuration
+- Create a backend (Node/Express, Next.js API routes, or serverless functions) that connects to MongoDB using `mongoose`.
+- Expose REST endpoints (e.g. `/api/favorites`, `/api/calories`) that the frontend can call.
+- Store your database connection string on the server side (never in the browser).
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Suggested API routes:
+
+- `POST /api/calories` – log a meal
+- `GET /api/calories` – list entries
+- `POST /api/favorites` – save a recipe
+- `GET /api/favorites` – list saved recipes
+
+Once a backend exists, update frontend calls to use your endpoints and remove any client-side mongoose imports.
+
+## Environment variables
+
+- Clerk keys for auth
+- Backend API URL (e.g. `VITE_API_BASE_URL`) used by frontend to call your backend
+
+## Notes
+
+- The navbar, dashboard cards, and recipes filtering have been updated for consistent Material-UI behavior.
+- The landing page is designed for signed-out users; once signed in, the main app layout (Navbar + Sidebar + routed pages) is displayed.

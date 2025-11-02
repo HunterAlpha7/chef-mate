@@ -76,17 +76,30 @@ const Recipes = () => {
       let results = []
 
       if (searchTerm.trim()) {
-        // Search by name first
+        // Search by name
         const searchResults = await MealDBAPI.searchByName(searchTerm)
         results = searchResults ? searchResults.map(MealDBAPI.formatMeal) : []
+      } else if (selectedCategory && selectedArea) {
+        // Combine filters: fetch by category then filter by area
+        const categoryResults = await MealDBAPI.filterByCategory(selectedCategory)
+        const formatted = categoryResults ? categoryResults.map(MealDBAPI.formatMeal) : []
+        results = formatted.filter(r => r.area === selectedArea)
       } else if (selectedCategory) {
-        // Filter by category
         const categoryResults = await MealDBAPI.filterByCategory(selectedCategory)
         results = categoryResults ? categoryResults.map(MealDBAPI.formatMeal) : []
       } else if (selectedArea) {
-        // Filter by area
         const areaResults = await MealDBAPI.filterByArea(selectedArea)
         results = areaResults ? areaResults.map(MealDBAPI.formatMeal) : []
+      }
+
+      // Post-filter when searching by name and filters are set
+      if (searchTerm.trim()) {
+        if (selectedCategory) {
+          results = results.filter(r => r.category === selectedCategory)
+        }
+        if (selectedArea) {
+          results = results.filter(r => r.area === selectedArea)
+        }
       }
 
       setRecipes(results)

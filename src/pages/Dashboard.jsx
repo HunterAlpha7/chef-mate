@@ -192,29 +192,19 @@ const Dashboard = () => {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {quickActions.map((action, index) => (
           <Grid item xs={6} md={3} key={index}>
-            {action.link ? (
-              <Card
-                component={Link}
-                to={action.link}
-                sx={{
-                  textDecoration: 'none',
-                  height: '100%',
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: theme.shadows[4]
-                  }
-                }}
-              >
-                <CardContent>
-                  <Avatar
-                    sx={{
-                      bgcolor: action.color,
-                      mb: 2,
-                      width: 40,
-                      height: 40
-                    }}
-                  >
+            <Card
+              sx={{
+                height: '100%',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: theme.shadows[4]
+                }
+              }}
+            >
+              {action.link ? (
+                <CardActionArea component={Link} to={action.link} sx={{ p: 2 }}>
+                  <Avatar sx={{ bgcolor: action.color, mb: 2, width: 40, height: 40 }}>
                     <action.icon size={20} />
                   </Avatar>
                   <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5, color: 'text.primary' }}>
@@ -223,30 +213,10 @@ const Dashboard = () => {
                   <Typography variant="body2" color="text.secondary">
                     {action.description}
                   </Typography>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card
-                sx={{
-                  height: '100%',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: theme.shadows[4]
-                  }
-                }}
-                onClick={() => handleQuickAction(action)}
-              >
-                <CardContent>
-                  <Avatar
-                    sx={{
-                      bgcolor: action.color,
-                      mb: 2,
-                      width: 40,
-                      height: 40
-                    }}
-                  >
+                </CardActionArea>
+              ) : (
+                <CardActionArea onClick={() => handleQuickAction(action)} sx={{ p: 2 }}>
+                  <Avatar sx={{ bgcolor: action.color, mb: 2, width: 40, height: 40 }}>
                     <action.icon size={20} />
                   </Avatar>
                   <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
@@ -255,9 +225,9 @@ const Dashboard = () => {
                   <Typography variant="body2" color="text.secondary">
                     {action.description}
                   </Typography>
-                </CardContent>
-              </Card>
-            )}
+                </CardActionArea>
+              )}
+            </Card>
           </Grid>
         ))}
       </Grid>
