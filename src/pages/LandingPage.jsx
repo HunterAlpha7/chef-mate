@@ -1,5 +1,5 @@
 import { SignInButton, SignUpButton } from '@clerk/clerk-react'
-import { ChefHat, MessageCircle, BookOpen, Target, TrendingUp, Users, Star } from 'lucide-react'
+import { ChefHat, MessageCircle, BookOpen, Target, TrendingUp, Users, Star, Utensils, Apple, Coffee, Carrot } from 'lucide-react'
 import {
   Box,
   Typography,
@@ -91,13 +91,31 @@ const LandingPage = () => {
       </AppBar>
 
       {/* Hero Section */}
-      <Container maxWidth="xl" sx={{ py: 10, textAlign: 'center' }}>
+      <Container maxWidth="xl" sx={{ py: 10, textAlign: 'center', position: 'relative' }}>
         <Typography variant="h2" sx={{ fontWeight: 'bold', mb: 3, fontSize: { xs: '2.5rem', md: '4rem' } }}>
           Your Personal
           <Typography component="span" sx={{ color: 'primary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>
             {' '}Cooking Companion
           </Typography>
         </Typography>
+        {/* Floating food icons row */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, mb: 3 }}>
+          <Box className="food-float">
+            <Utensils size={28} color={theme.palette.primary.main} />
+          </Box>
+          <Box className="food-float delay-1">
+            <Apple size={28} color={theme.palette.success.main} />
+          </Box>
+          <Box className="food-float delay-2">
+            <Coffee size={28} color={theme.palette.brown?.main || '#8B4513'} />
+          </Box>
+          <Box className="food-float delay-3">
+            <Carrot size={28} color={theme.palette.warning.main} />
+          </Box>
+          <Box className="food-float delay-4">
+            <ChefHat size={28} color={theme.palette.secondary.main} />
+          </Box>
+        </Box>
         <Typography variant="h6" sx={{ color: 'text.secondary', mb: 4, maxWidth: '800px', mx: 'auto', lineHeight: 1.6 }}>
           Discover recipes, get AI-powered cooking assistance, track your nutrition, 
           and become a better cook with ChefMate - your all-in-one culinary platform.

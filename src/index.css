@@ -68,3 +68,20 @@ body {
 .animate-slide-in-right {
   animation: slideInRight 0.3s ease-out;
 }
+
+/* Food icon floating effect */
+@keyframes foodFloat {
+  0% { transform: translateY(0) }
+  50% { transform: translateY(-8px) }
+  100% { transform: translateY(0) }
+}
+
+.food-float {
+  animation: foodFloat 3.5s ease-in-out infinite;
+}
+
+.food-float.delay-1 { animation-delay: 0.3s }
+.food-float.delay-2 { animation-delay: 0.6s }
+.food-float.delay-3 { animation-delay: 0.9s }
+.food-float.delay-4 { animation-delay: 1.2s }
+.food-float.delay-5 { animation-delay: 1.5s }

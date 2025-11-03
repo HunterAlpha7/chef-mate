@@ -14,6 +14,7 @@ import {
   Loader2
 } from 'lucide-react'
 import MealDBAPI from '../lib/mealdb'
+import { getMissingIngredients, addToShoppingList } from '../lib/storage'
 import {
   Box,
   Typography,
@@ -285,6 +286,22 @@ const RecipeDetail = () => {
               <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
                 Ingredients
               </Typography>
+              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    const missing = getMissingIngredients(recipe.ingredients)
+                    if (missing.length === 0) {
+                      alert('All ingredients are available in your inventory!')
+                      return
+                    }
+                    missing.forEach(m => addToShoppingList(m))
+                    alert(`${missing.length} missing ingredient(s) added to your shopping list.`)
+                  }}
+                >
+                  Add missing to shopping list
+                </Button>
+              </Box>
               <List dense>
                 {recipe.ingredients.map((ingredient, index) => (
                   <ListItem

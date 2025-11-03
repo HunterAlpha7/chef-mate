@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useUser } from '@clerk/clerk-react'
 import { Send, Bot, User, Loader2, ChefHat, Lightbulb, Clock, Utensils } from 'lucide-react'
-import OpenAIService from '../lib/openai'
+import { getChatCompletion } from '../lib/openai'
 import {
   Box,
   Typography,
@@ -86,12 +86,11 @@ const Chat = () => {
         content: msg.content
       }))
 
-      const response = await OpenAIService.getChatCompletion(conversationHistory)
-      
+      const responseMessage = await getChatCompletion(conversationHistory)
       const assistantMessage = {
         id: Date.now() + 1,
         role: 'assistant',
-        content: response,
+        content: responseMessage?.content || "I’m here to help with anything food-related — recipes, techniques, nutrition, and more.",
         timestamp: new Date()
       }
 

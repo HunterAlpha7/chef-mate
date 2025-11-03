@@ -79,6 +79,8 @@ const Navbar = ({ onMenuClick }) => {
             { to: '/recipes', label: 'Recipes' },
             { to: '/chat', label: 'AI Chef' },
             { to: '/calories', label: 'Calories' },
+            { to: '/inventory', label: 'Inventory' },
+            { to: '/shopping', label: 'Shopping' },
             { to: '/profile', label: 'Profile' }
           ].map((item) => (
             <Button

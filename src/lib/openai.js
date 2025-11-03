@@ -1,14 +1,45 @@
-import OpenAI from 'openai';
+// Lightweight OpenRouter client using fetch for reliability in the browser
+const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY
+const APP_URL = typeof window !== 'undefined' ? window.location.origin : ''
+const APP_NAME = import.meta.env.VITE_APP_NAME || 'ChefMate'
 
-const openai = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: import.meta.env.VITE_OPENROUTER_API_KEY,
-  defaultHeaders: {
-    "HTTP-Referer": import.meta.env.VITE_APP_URL,
-    "X-Title": import.meta.env.VITE_APP_NAME,
-  },
-  dangerouslyAllowBrowser: true
-});
+async function callOpenRouter(messages, options = {}) {
+  // Prefer auto-routing to avoid data policy 404s when free models are restricted
+  const model = options.model || 'openrouter/auto'
+  const temperature = options.temperature ?? 0.7
+  const max_tokens = options.max_tokens ?? 1000
+
+  const headers = {
+    'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+    'HTTP-Referer': APP_URL,
+    'Referer': APP_URL,
+    'X-Title': APP_NAME,
+    'Content-Type': 'application/json'
+  }
+
+  const body = JSON.stringify({ model, messages, temperature, max_tokens })
+
+  const res = await fetch(OPENROUTER_API_URL, {
+    method: 'POST',
+    headers,
+    body
+  })
+
+  if (!res.ok) {
+    const text = await res.text()
+    // Provide a clearer message for data policy-related 404s
+    if (res.status === 404 && /data policy/i.test(text)) {
+      throw new Error('OpenRouter data policy prevents access to free models. Update privacy settings or use a non-free model.')
+    }
+    throw new Error(`OpenRouter error ${res.status}: ${text}`)
+  }
+
+  const data = await res.json()
+  const choice = data?.choices?.[0]
+  const message = choice?.message || { role: 'assistant', content: '' }
+  return message
+}
 
 export const COOKING_SYSTEM_PROMPT = `You are ChefMate, an expert AI cooking assistant designed to help users with all their culinary needs. You are knowledgeable, friendly, and passionate about food and cooking.
 
@@ -44,21 +75,20 @@ Always maintain a warm, helpful tone and remember that cooking should be fun and
 export async function getChatCompletion(messages, context = {}) {
   try {
     const systemMessage = {
-      role: "system",
+      role: 'system',
       content: COOKING_SYSTEM_PROMPT + (context.additionalContext ? `\n\nAdditional Context: ${context.additionalContext}` : '')
-    };
+    }
 
-    const completion = await openai.chat.completions.create({
-      model: "deepseek/deepseek-chat-v3.1:free",
-      messages: [systemMessage, ...messages],
+    const message = await callOpenRouter([systemMessage, ...messages], {
+      // Keep defaults; allow auto model routing and avoid free-model 404s
       temperature: 0.7,
-      max_tokens: 1000,
-    });
+      max_tokens: 1000
+    })
 
-    return completion.choices[0].message;
+    return message
   } catch (error) {
-    console.error('OpenAI API Error:', error);
-    throw new Error('Failed to get AI response. Please try again.');
+    console.error('OpenRouter API Error:', error)
+    throw new Error(error.message || 'Failed to get AI response. Please try again.')
   }
 }
 
@@ -76,22 +106,17 @@ export async function getRecipeRecommendations(ingredients, preferences = {}) {
     4. Difficulty level
     5. Key ingredients needed (highlight any missing ones)
     
-    Format as a clear, organized list.`;
+    Format as a clear, organized list.`
 
-    const completion = await openai.chat.completions.create({
-      model: "deepseek/deepseek-chat-v3.1:free",
-      messages: [
-        { role: "system", content: COOKING_SYSTEM_PROMPT },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.8,
-      max_tokens: 800,
-    });
+    const message = await callOpenRouter([
+      { role: 'system', content: COOKING_SYSTEM_PROMPT },
+      { role: 'user', content: prompt }
+    ], { temperature: 0.8, max_tokens: 800 })
 
-    return completion.choices[0].message.content;
+    return message.content
   } catch (error) {
-    console.error('Recipe recommendation error:', error);
-    throw new Error('Failed to get recipe recommendations. Please try again.');
+    console.error('Recipe recommendation error:', error)
+    throw new Error('Failed to get recipe recommendations. Please try again.')
   }
 }
 
@@ -113,23 +138,17 @@ export async function getNutritionalAdvice(userProfile, goals) {
     4. Healthy recipe ideas
     5. Tips for achieving their goals
     
-    Keep advice realistic and sustainable.`;
+    Keep advice realistic and sustainable.`
 
-    const completion = await openai.chat.completions.create({
-      model: "deepseek/deepseek-chat-v3.1:free",
-      messages: [
-        { role: "system", content: COOKING_SYSTEM_PROMPT },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.6,
-      max_tokens: 600,
-    });
+    const message = await callOpenRouter([
+      { role: 'system', content: COOKING_SYSTEM_PROMPT },
+      { role: 'user', content: prompt }
+    ], { temperature: 0.6, max_tokens: 600 })
 
-    return completion.choices[0].message.content;
+    return message.content
   } catch (error) {
-    console.error('Nutritional advice error:', error);
-    throw new Error('Failed to get nutritional advice. Please try again.');
+    console.error('Nutritional advice error:', error)
+    throw new Error('Failed to get nutritional advice. Please try again.')
   }
 }
-
-export default openai;
+export default {}

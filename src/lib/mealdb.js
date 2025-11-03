@@ -153,7 +153,7 @@ class MealDBAPI {
       tags: meal.strTags ? meal.strTags.split(',').map(tag => tag.trim()) : [],
       youtube: meal.strYoutube,
       source: meal.strSource,
-      ingredients: this.parseMealIngredients(meal),
+      ingredients: MealDBAPI.parseMealIngredients(meal),
       dateModified: meal.dateModified,
     };
   }

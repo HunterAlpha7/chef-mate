@@ -11,6 +11,8 @@ import CalorieTracker from './pages/CalorieTracker'
 import Profile from './pages/Profile'
 import LandingPage from './pages/LandingPage'
 import { useState } from 'react'
+import Inventory from './pages/Inventory'
+import ShoppingList from './pages/ShoppingList'
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -38,10 +40,10 @@ function App() {
                 flexGrow: 1, 
                 overflowY: 'auto', 
                 bgcolor: 'background.default', 
-                p: 2 
+                py: 2 
               }}
             >
-              <Container maxWidth="xl">
+              <Container maxWidth="xl" disableGutters>
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/dashboard" element={<Dashboard />} />
@@ -50,6 +52,8 @@ function App() {
                   <Route path="/chat" element={<Chat />} />
                   <Route path="/calories" element={<CalorieTracker />} />
                   <Route path="/profile" element={<Profile />} />
+                  <Route path="/inventory" element={<Inventory />} />
+                  <Route path="/shopping" element={<ShoppingList />} />
                 </Routes>
               </Container>
             </Box>

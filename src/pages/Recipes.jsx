@@ -81,14 +81,14 @@ const Recipes = () => {
         results = searchResults ? searchResults.map(MealDBAPI.formatMeal) : []
       } else if (selectedCategory && selectedArea) {
         // Combine filters: fetch by category then filter by area
-        const categoryResults = await MealDBAPI.filterByCategory(selectedCategory)
+        const categoryResults = await MealDBAPI.getMealsByCategory(selectedCategory)
         const formatted = categoryResults ? categoryResults.map(MealDBAPI.formatMeal) : []
         results = formatted.filter(r => r.area === selectedArea)
       } else if (selectedCategory) {
-        const categoryResults = await MealDBAPI.filterByCategory(selectedCategory)
+        const categoryResults = await MealDBAPI.getMealsByCategory(selectedCategory)
         results = categoryResults ? categoryResults.map(MealDBAPI.formatMeal) : []
       } else if (selectedArea) {
-        const areaResults = await MealDBAPI.filterByArea(selectedArea)
+        const areaResults = await MealDBAPI.getMealsByArea(selectedArea)
         results = areaResults ? areaResults.map(MealDBAPI.formatMeal) : []
       }
 

@@ -9,7 +9,9 @@ import {
   ChefHat,
   TrendingUp,
   Heart,
-  Settings
+  Settings,
+  Package,
+  ClipboardList
 } from 'lucide-react'
 import { useUser } from '@clerk/clerk-react'
 import {
@@ -40,6 +42,8 @@ const Sidebar = ({ isOpen, onClose }) => {
     { name: 'Recipes', href: '/recipes', icon: BookOpen },
     { name: 'AI Chat', href: '/chat', icon: MessageCircle },
     { name: 'Calorie Tracker', href: '/calories', icon: Target },
+    { name: 'Inventory', href: '/inventory', icon: Package },
+    { name: 'Shopping List', href: '/shopping', icon: ClipboardList },
     { name: 'Profile', href: '/profile', icon: User },
   ]
 
