@@ -246,7 +246,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         keepMounted: true, // Better open performance on mobile.
       }}
       sx={{
-        width: drawerWidth,
+        // Do NOT reserve layout width when closed; only style paper
         flexShrink: 0,
         '& .MuiDrawer-paper': {
           width: drawerWidth,

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useUser } from '@clerk/clerk-react'
 import { Box, Container, Typography, Card, CardContent, TextField, Button, Grid, List, ListItem, ListItemText, IconButton, Snackbar, Alert } from '@mui/material'
 import { Plus, Trash2 } from 'lucide-react'
 import { getShoppingList, addToShoppingList, removeFromShoppingList } from '../lib/storage'
@@ -7,27 +8,41 @@ const ShoppingList = () => {
   const [items, setItems] = useState([])
   const [form, setForm] = useState({ name: '', quantity: '', unit: '' })
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' })
+  const { user } = useUser()
 
   useEffect(() => {
-    setItems(getShoppingList())
-  }, [])
+    async function load() {
+      const uid = user?.id
+      const data = await getShoppingList(uid)
+      setItems(data)
+    }
+    load()
+  }, [user])
 
-  const refresh = () => setItems(getShoppingList())
+  const refresh = async () => {
+    const uid = user?.id
+    const data = await getShoppingList(uid)
+    setItems(data)
+  }
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!form.name.trim()) {
       setSnackbar({ open: true, message: 'Item name is required', severity: 'warning' })
       return
     }
-    addToShoppingList(form)
+    await addToShoppingList(user?.id, {
+      name: form.name,
+      quantity: Number(form.quantity) || 0,
+      unit: form.unit
+    })
     setForm({ name: '', quantity: '', unit: '' })
-    refresh()
+    await refresh()
     setSnackbar({ open: true, message: 'Added to shopping list', severity: 'success' })
   }
 
-  const handleRemove = (id) => {
-    removeFromShoppingList(id)
-    refresh()
+  const handleRemove = async (id) => {
+    await removeFromShoppingList(user?.id, id)
+    await refresh()
     setSnackbar({ open: true, message: 'Removed from shopping list', severity: 'info' })
   }
 
@@ -61,8 +76,8 @@ const ShoppingList = () => {
           ) : (
             <List>
               {items.map((it) => (
-                <ListItem key={it.id} divider secondaryAction={
-                  <IconButton edge="end" onClick={() => handleRemove(it.id)}>
+                <ListItem key={it._id} divider secondaryAction={
+                  <IconButton edge="end" onClick={() => handleRemove(it._id)}>
                     <Trash2 size={18} />
                   </IconButton>
                 }>

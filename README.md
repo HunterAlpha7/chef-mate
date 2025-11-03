@@ -1,69 +1,198 @@
-# ChefMate
+# ChefMate — Cooking Companion
 
-ChefMate is a React (Vite) frontend using Material-UI and Clerk for authentication. It integrates with TheMealDB for recipes. This repository currently contains only the frontend app.
+ChefMate is a modern, full-stack cooking companion application. The frontend is built with React (Vite) and Material-UI, and the backend is a lightweight Express server. It integrates with TheMealDB for recipe data and includes functional inventory, shopping list, and saved recipes features.
 
-## Running the app
+This README is a complete documentation you can use to set up, run, and extend the project.
 
+## Quick Start
+
+- Prerequisites: Node.js 18+ and npm
 - Install dependencies: `npm install`
-- Start dev server: `npm run dev`
+- Start frontend (Vite dev server): `npm run dev` (default `http://localhost:5174/`)
+- Start backend (Express server): `npm run server` (default `http://localhost:3001/`)
 
-## MongoDB integration
+The backend uses an in-memory store by default. No external databases or authentication are required; data resets when the server restarts.
 
-This repo does not include a Node.js backend. MongoDB connections cannot be made directly from the browser. To use MongoDB:
+## Architecture
 
-- Create a backend (Node/Express, Next.js API routes, or serverless functions) that connects to MongoDB using `mongoose`.
-- Expose REST endpoints (e.g. `/api/favorites`, `/api/calories`) that the frontend can call.
-- Store your database connection string on the server side (never in the browser).
+- Frontend: React (Vite) + Material-UI
+  - Pages: Dashboard, Recipes, Recipe Detail, Inventory, Shopping List, Chat, Calorie Tracker, Profile, Landing Page
+  - Libraries: `@mui/material`, `lucide-react`
+  - API client: `src/lib/api.js`, app helpers in `src/lib/storage.js`
 
-Suggested API routes:
+- Backend: Express server
+  - In-memory adapter: `server/db/memory.js`
+  - Routes: `server/routes/inventory.js`, `server/routes/shopping.js`, `server/routes/saved.js`
+  - Entry: `server/index.js`
 
-- `POST /api/calories` – log a meal
-- `GET /api/calories` – list entries
-- `POST /api/favorites` – save a recipe
-- `GET /api/favorites` – list saved recipes
+- External services
+  - TheMealDB (`src/lib/mealdb.js`) for recipe data
+  - Optional AI chat via OpenRouter (`src/lib/openai.js`)
 
-Once a backend exists, update frontend calls to use your endpoints and remove any client-side mongoose imports.
-
-## Environment variables
-
-- Clerk keys for auth
-- Backend API URL (e.g. `VITE_API_BASE_URL`) used by frontend to call your backend
-- OpenRouter API: set `VITE_OPENROUTER_API_KEY`, `VITE_APP_URL`, `VITE_APP_NAME`
-
-Example `.env` (use `.env.local` for local development):
+### Folder Overview
 
 ```
-VITE_OPENROUTER_API_KEY=your_key_here
-VITE_APP_URL=http://localhost:5173/
-VITE_APP_NAME=ChefMate
+server/
+  db/memory.js          # In-memory persistence (no DB required)
+  index.js              # Express server entry
+  routes/
+    inventory.js        # Inventory endpoints
+    shopping.js         # Shopping list endpoints
+    saved.js            # Saved recipes endpoints
+
+src/
+  lib/
+    api.js              # Fetch wrapper + backend helpers
+    storage.js          # App helpers (inventory, shopping, missing ingredients)
+    mealdb.js           # TheMealDB integration and formatters
+    openai.js           # Optional AI chat client
+  pages/                # UI pages
+  components/           # Navbar, Sidebar, etc.
 ```
 
-## Notes
+## Configuration
 
-- The navbar, dashboard cards, and recipes filtering have been updated for consistent Material-UI behavior.
-- The landing page is designed for signed-out users; once signed in, the main app layout (Navbar + Sidebar + routed pages) is displayed.
+- Frontend (`.env.local`)
+  - `VITE_SERVER_URL` — Backend base URL (default `http://localhost:3001`)
+  - `VITE_MEAL_API_KEY` — Optional TheMealDB key
+  - `VITE_OPENROUTER_API_KEY` — Optional for AI chat
+  - `VITE_APP_URL`, `VITE_APP_NAME` — Optional metadata for AI chat
 
-## AI Chat (OpenRouter)
+- Backend (`.env`)
+  - `PORT` — Backend port (default `3001`)
+  - `CORS_ORIGIN` — Allowed frontend origin (default `http://localhost:5174`)
 
-- The AI client uses a fetch-based OpenRouter integration (`src/lib/openai.js`) targeting `https://openrouter.ai/api/v1/chat/completions`.
-- The assistant adopts a cooking-focused system prompt but answers any food-related questions: recipes, techniques, substitutions, nutrition, planning, and safety.
-- If you run into issues, verify the environment variables are set and the network call succeeds in the browser dev tools.
+No database variables are required for the default memory-backed backend.
 
-## Inventory & Shopping List
+## User Scoping
 
-- Inventory lets you add items with quantity, optional unit, and optional expiry date. Data is persisted in `localStorage`.
-- Shopping List allows manual additions and removals, and receives items from Recipe Detail for missing ingredients.
-- From Recipe Detail, use the “Add missing to shopping list” button to compare required ingredients against your inventory and auto-add missing items.
-- Packaging scan is currently a stub: pressing “Scan packaging” shows an error notification “AI is out-of-credit”. Replace this later with OCR/barcode integration.
+- All backend endpoints accept an optional `X-User-Id` header for simple user scoping.
+- If omitted, the server defaults to `demo-user`.
+- This enables multi-user behavior locally without authentication.
 
-### Storage keys
+## API Reference
 
-- Inventory: `chefmate_inventory`
-- Shopping List: `chefmate_shopping_list`
+- Base URL: `http://localhost:3001`
+- Common headers:
+  - `Content-Type: application/json`
+  - `X-User-Id: <your-id>` (optional)
 
-### Files
+### Inventory Endpoints
 
-- `src/lib/storage.js` – local storage helpers and missing-ingredient logic
-- `src/pages/Inventory.jsx` – inventory management UI
-- `src/pages/ShoppingList.jsx` – shopping list UI
-- `src/pages/RecipeDetail.jsx` – button to add missing ingredients to shopping list
+- `GET /api/inventory` — List items
+  - Returns: `[{ _id, userId, name, quantity, unit, expiryDate, createdAt, updatedAt }]`
+
+- `POST /api/inventory` — Add item
+  - Body: `{ name: string, quantity?: number, unit?: string, expiryDate?: ISO8601|null }`
+  - Returns: created item
+
+- `PATCH /api/inventory/:id` — Update item
+  - Body: partial fields, e.g. `{ quantity: 5 }`
+  - Returns: updated item
+
+- `DELETE /api/inventory/:id` — Remove item
+  - Returns: `{ ok: true }`
+
+Example:
+
+```
+curl -X POST http://localhost:3001/api/inventory \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: alice" \
+  -d '{"name":"Milk","quantity":1,"unit":"L"}'
+```
+
+### Shopping List Endpoints
+
+- `GET /api/shopping` — List entries
+- `POST /api/shopping` — Add entry `{ name, quantity?, unit? }`
+- `PATCH /api/shopping/:id` — Update entry
+- `DELETE /api/shopping/:id` — Remove entry
+- `DELETE /api/shopping` — Clear all entries for the user
+
+Example:
+
+```
+curl -X POST http://localhost:3001/api/shopping \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: demo-user" \
+  -d '{"name":"Eggs","quantity":12,"unit":"pcs"}'
+```
+
+### Saved Recipes Endpoints
+
+- `GET /api/saved` — List saved recipes
+- `POST /api/saved` — Save recipe `{ recipeId, title, thumbnail?, sourceUrl? }` (idempotent)
+- `DELETE /api/saved/:id` — Remove by document ID
+- `DELETE /api/saved/byRecipeId?recipeId=...` — Remove by recipe ID
+
+Example:
+
+```
+curl -X POST http://localhost:3001/api/saved \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: bob" \
+  -d '{"recipeId":"52772","title":"Teriyaki Chicken","thumbnail":"https://...jpg"}'
+```
+
+## Data Models
+
+- InventoryItem: `{ _id, userId, name, quantity, unit, expiryDate|null, createdAt, updatedAt }`
+- ShoppingItem: `{ _id, userId, name, quantity, unit, createdAt, updatedAt }`
+- SavedRecipe: `{ _id, userId, recipeId, title, thumbnail, sourceUrl, createdAt, updatedAt }`
+
+## Frontend Integration
+
+- API client: `src/lib/api.js`
+  - Inventory: `fetchInventory`, `createInventoryItem`, `updateInventoryItemApi`, `deleteInventoryItem`
+  - Shopping: `fetchShoppingList`, `createShoppingItem`, `updateShoppingItemApi`, `deleteShoppingItem`, `clearShoppingItems`
+  - Saved: `fetchSavedRecipes`, `saveRecipe`, `removeSavedRecipeById`, `removeSavedRecipeByRecipeId`
+
+- App helpers: `src/lib/storage.js`
+  - Inventory: `getInventory`, `addInventoryItem`, `updateInventoryItem`, `removeInventoryItem`
+  - Shopping: `getShoppingList`, `addToShoppingList`, `removeFromShoppingList`, `clearShoppingList`
+  - Missing ingredients: `getMissingIngredients(ingredients, inventoryItems)`
+
+Usage:
+
+```js
+import { getInventory, addInventoryItem } from '../lib/storage'
+
+const userId = 'demo-user'
+const items = await getInventory(userId)
+await addInventoryItem(userId, { name: 'Flour', quantity: 2, unit: 'kg' })
+```
+
+## Feature Walkthrough
+
+- Inventory: add items with quantity, unit, optional expiry; remove items
+- Shopping List: add/remove entries; clear list via API
+- Recipes: browse/search via TheMealDB; open to view details, tags, links
+- Recipe Detail: compare ingredients with inventory and add missing to shopping list; toggle favorite to save/remove recipes
+- Chat (optional): AI cooking chat via OpenRouter if configured
+
+## Development Notes
+
+- Scripts
+  - `npm run dev` — frontend
+  - `npm run server` — backend
+- Styling: Material-UI + `lucide-react`
+- Persistence: memory-backed by default; swap `server/db/memory.js` for a real database to persist
+
+## Troubleshooting
+
+- Frontend cannot call backend: ensure `VITE_SERVER_URL` matches backend and CORS origin is correct
+- CORS errors: set `CORS_ORIGIN` to `http://localhost:5174` or your actual frontend origin
+- TheMealDB rate limits: consider using a key and retry logic
+- Data resets on restart: expected with in-memory store
+
+## Roadmap
+
+- Persistent data layer
+- Packaging scan via OCR/barcode
+- Nutrition computation from ingredients
+- Offline caching
+
+## License
+
+See `LICENSE` for details.

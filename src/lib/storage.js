@@ -1,83 +1,41 @@
-const INVENTORY_KEY = 'chefmate_inventory'
-const SHOPPING_LIST_KEY = 'chefmate_shopping_list'
+import { fetchInventory, createInventoryItem, updateInventoryItemApi, deleteInventoryItem, fetchShoppingList, createShoppingItem, deleteShoppingItem, clearShoppingItems } from './api'
 
-function read(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key)
-    return raw ? JSON.parse(raw) : fallback
-  } catch {
-    return fallback
-  }
+// Inventory via backend API
+export async function getInventory(userId) {
+  return await fetchInventory(userId)
 }
 
-function write(key, value) {
-  localStorage.setItem(key, JSON.stringify(value))
+export async function addInventoryItem(userId, item) {
+  return await createInventoryItem(userId, item)
 }
 
-// Inventory
-export function getInventory() {
-  return read(INVENTORY_KEY, [])
+export async function updateInventoryItem(userId, id, updates) {
+  return await updateInventoryItemApi(userId, id, updates)
 }
 
-export function setInventory(items) {
-  write(INVENTORY_KEY, items)
+export async function removeInventoryItem(userId, id) {
+  return await deleteInventoryItem(userId, id)
 }
 
-export function addInventoryItem(item) {
-  const items = getInventory()
-  items.push({
-    id: Date.now(),
-    name: item.name.trim(),
-    quantity: Number(item.quantity) || 0,
-    unit: item.unit?.trim() || '',
-    expiryDate: item.expiryDate || null
-  })
-  setInventory(items)
+// Shopping List via backend API
+export async function getShoppingList(userId) {
+  return await fetchShoppingList(userId)
 }
 
-export function updateInventoryItem(id, updates) {
-  const items = getInventory().map(it => it.id === id ? { ...it, ...updates } : it)
-  setInventory(items)
+export async function addToShoppingList(userId, entry) {
+  return await createShoppingItem(userId, entry)
 }
 
-export function removeInventoryItem(id) {
-  const items = getInventory().filter(it => it.id !== id)
-  setInventory(items)
+export async function removeFromShoppingList(userId, id) {
+  return await deleteShoppingItem(userId, id)
 }
 
-export function findInventoryQuantity(name) {
-  const items = getInventory()
-  const normalized = name.toLowerCase().trim()
-  const item = items.find(it => it.name.toLowerCase().trim() === normalized)
-  return item ? { quantity: item.quantity, unit: item.unit } : null
-}
-
-// Shopping List
-export function getShoppingList() {
-  return read(SHOPPING_LIST_KEY, [])
-}
-
-export function setShoppingList(list) {
-  write(SHOPPING_LIST_KEY, list)
-}
-
-export function addToShoppingList(entry) {
-  const list = getShoppingList()
-  list.push({ id: Date.now(), name: entry.name.trim(), quantity: Number(entry.quantity) || 0, unit: entry.unit || '' })
-  setShoppingList(list)
-}
-
-export function removeFromShoppingList(id) {
-  const list = getShoppingList().filter(it => it.id !== id)
-  setShoppingList(list)
-}
-
-export function clearShoppingList() {
-  setShoppingList([])
+export async function clearShoppingList(userId) {
+  return await clearShoppingItems(userId)
 }
 
 // Helpers
-export function getMissingIngredients(ingredients) {
+export function getMissingIngredients(ingredients, inventoryItems) {
   // ingredients: array of { ingredient, measure }
   // measure parsing is best-effort; fallback to quantity 1
   const parseQty = (measure) => {
@@ -87,10 +45,12 @@ export function getMissingIngredients(ingredients) {
   }
   const missing = []
   for (const ing of ingredients) {
-    const have = findInventoryQuantity(ing.ingredient)
+    const normalized = ing.ingredient.toLowerCase().trim()
+    const haveItem = (inventoryItems || []).find(it => it.name.toLowerCase().trim() === normalized)
+    const haveQty = haveItem?.quantity || 0
     const needQty = parseQty(ing.measure)
-    if (!have || (have.quantity || 0) < needQty) {
-      missing.push({ name: ing.ingredient, quantity: Math.max(needQty - (have?.quantity || 0), needQty), unit: '' })
+    if (haveQty < needQty) {
+      missing.push({ name: ing.ingredient, quantity: Math.max(needQty - haveQty, needQty), unit: '' })
     }
   }
   return missing

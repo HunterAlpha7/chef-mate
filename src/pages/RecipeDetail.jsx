@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useUser } from '@clerk/clerk-react'
 import { useParams, Link } from 'react-router-dom'
 import { 
   ArrowLeft, 
@@ -14,7 +15,8 @@ import {
   Loader2
 } from 'lucide-react'
 import MealDBAPI from '../lib/mealdb'
-import { getMissingIngredients, addToShoppingList } from '../lib/storage'
+import { getMissingIngredients, addToShoppingList, getInventory } from '../lib/storage'
+import { fetchSavedRecipes, saveRecipe, removeSavedRecipeByRecipeId } from '../lib/api'
 import {
   Box,
   Typography,
@@ -38,6 +40,7 @@ import {
 
 const RecipeDetail = () => {
   const theme = useTheme()
+  const { user } = useUser()
   const { id } = useParams()
   const [recipe, setRecipe] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -74,9 +77,40 @@ const RecipeDetail = () => {
     }
   }, [id])
 
-  const toggleFavorite = () => {
-    setIsFavorited(!isFavorited)
-    // TODO: Implement favorite functionality with backend
+  // Reflect saved state from backend for current user and recipe
+  useEffect(() => {
+    const checkSaved = async () => {
+      if (!user || !recipe) return
+      try {
+        const saved = await fetchSavedRecipes(user.id)
+        const rid = String(recipe.id || '')
+        setIsFavorited(saved.some(r => String(r.recipeId) === rid))
+      } catch (e) {
+        console.warn('Could not load saved recipes', e)
+      }
+    }
+    checkSaved()
+  }, [user, recipe])
+
+  const toggleFavorite = async () => {
+    if (!user || !recipe) return
+    const payload = {
+      recipeId: String(recipe.id || ''),
+      title: recipe.name || 'Untitled',
+      thumbnail: recipe.image || '',
+      sourceUrl: recipe.sourceUrl || ''
+    }
+    try {
+      if (isFavorited) {
+        await removeSavedRecipeByRecipeId(user.id, payload.recipeId)
+        setIsFavorited(false)
+      } else {
+        await saveRecipe(user.id, payload)
+        setIsFavorited(true)
+      }
+    } catch (e) {
+      console.error('Failed to toggle favorite', e)
+    }
   }
 
   const toggleIngredient = (index) => {
@@ -289,13 +323,14 @@ const RecipeDetail = () => {
               <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                 <Button
                   variant="outlined"
-                  onClick={() => {
-                    const missing = getMissingIngredients(recipe.ingredients)
+                  onClick={async () => {
+                    const inventory = user ? await getInventory(user.id) : []
+                    const missing = getMissingIngredients(recipe.ingredients, inventory)
                     if (missing.length === 0) {
                       alert('All ingredients are available in your inventory!')
                       return
                     }
-                    missing.forEach(m => addToShoppingList(m))
+                    await Promise.all(missing.map(m => addToShoppingList(user?.id, m)))
                     alert(`${missing.length} missing ingredient(s) added to your shopping list.`)
                   }}
                 >

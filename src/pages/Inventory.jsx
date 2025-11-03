@@ -1,33 +1,49 @@
 import { useState, useEffect } from 'react'
+import { useUser } from '@clerk/clerk-react'
 import { Box, Container, Typography, Grid, Card, CardContent, TextField, Button, IconButton, Snackbar, Alert, List, ListItem, ListItemText, ListItemSecondaryAction } from '@mui/material'
 import { Plus, Trash2, ScanLine } from 'lucide-react'
-import { getInventory, addInventoryItem, removeInventoryItem, updateInventoryItem } from '../lib/storage'
+import { getInventory, addInventoryItem, removeInventoryItem } from '../lib/storage'
 
 const Inventory = () => {
   const [items, setItems] = useState([])
   const [form, setForm] = useState({ name: '', quantity: '', unit: '', expiryDate: '' })
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' })
+  const { user } = useUser()
 
   useEffect(() => {
-    setItems(getInventory())
-  }, [])
+    async function load() {
+      const uid = user?.id
+      const data = await getInventory(uid)
+      setItems(data)
+    }
+    load()
+  }, [user])
 
-  const refresh = () => setItems(getInventory())
+  const refresh = async () => {
+    const uid = user?.id
+    const data = await getInventory(uid)
+    setItems(data)
+  }
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!form.name.trim()) {
       setSnackbar({ open: true, message: 'Item name is required', severity: 'warning' })
       return
     }
-    addInventoryItem(form)
+    await addInventoryItem(user?.id, {
+      name: form.name,
+      quantity: Number(form.quantity) || 0,
+      unit: form.unit,
+      expiryDate: form.expiryDate ? new Date(form.expiryDate).toISOString() : null
+    })
     setForm({ name: '', quantity: '', unit: '', expiryDate: '' })
-    refresh()
+    await refresh()
     setSnackbar({ open: true, message: 'Item added to inventory', severity: 'success' })
   }
 
-  const handleRemove = (id) => {
-    removeInventoryItem(id)
-    refresh()
+  const handleRemove = async (id) => {
+    await removeInventoryItem(user?.id, id)
+    await refresh()
     setSnackbar({ open: true, message: 'Item removed', severity: 'info' })
   }
 
@@ -73,13 +89,13 @@ const Inventory = () => {
           ) : (
             <List>
               {items.map((it) => (
-                <ListItem key={it.id} divider>
+                <ListItem key={it._id} divider>
                   <ListItemText
                     primary={`${it.name} — ${it.quantity} ${it.unit || ''}`}
-                    secondary={it.expiryDate ? `Expiry: ${it.expiryDate}` : ''}
+                    secondary={it.expiryDate ? `Expiry: ${new Date(it.expiryDate).toLocaleDateString()}` : ''}
                   />
                   <ListItemSecondaryAction>
-                    <IconButton edge="end" onClick={() => handleRemove(it.id)}>
+                    <IconButton edge="end" onClick={() => handleRemove(it._id)}>
                       <Trash2 size={18} />
                     </IconButton>
                   </ListItemSecondaryAction>
